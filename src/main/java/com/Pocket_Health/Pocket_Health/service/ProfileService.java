@@ -1,0 +1,64 @@
+package com.Pocket_Health.Pocket_Health.service;
+
+import com.Pocket_Health.Pocket_Health.entity.Profile;
+import com.Pocket_Health.Pocket_Health.entity.User;
+import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class ProfileService {
+
+    private final ProfileRepository profileRepository;
+    private final UserRepository userRepository;
+
+    public Profile create(Map<String, Object> body) {
+        UUID userId = UUID.fromString((String) body.get("userId"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Profile profile = Profile.builder()
+                .user(user)
+                .surname((String) body.get("surname"))
+                .otherNames((String) body.get("otherNames"))
+                .dateOfBirth(body.get("dateOfBirth") != null ? LocalDate.parse((String) body.get("dateOfBirth")) : null)
+                .gender((String) body.get("gender"))
+                .phone1((String) body.get("phone1"))
+                .residence((String) body.get("residence"))
+                .region((String) body.get("region"))
+                .relation((String) body.get("relation"))
+                .isPrimary(body.get("isPrimary") != null && (Boolean) body.get("isPrimary"))
+                .build();
+        return profileRepository.save(profile);
+    }
+
+    public List<Profile> getAll() { return profileRepository.findAll(); }
+
+    public Profile getById(UUID id) {
+        return profileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+    }
+
+    public List<Profile> getByUserId(UUID userId) {
+        return profileRepository.findByUser_UserId(userId);
+    }
+
+    public Profile update(UUID id, Map<String, Object> body) {
+        Profile profile = getById(id);
+        if (body.containsKey("surname"))    profile.setSurname((String) body.get("surname"));
+        if (body.containsKey("otherNames")) profile.setOtherNames((String) body.get("otherNames"));
+        if (body.containsKey("phone1"))     profile.setPhone1((String) body.get("phone1"));
+        if (body.containsKey("residence"))  profile.setResidence((String) body.get("residence"));
+        if (body.containsKey("region"))     profile.setRegion((String) body.get("region"));
+        if (body.containsKey("gender"))     profile.setGender((String) body.get("gender"));
+        return profileRepository.save(profile);
+    }
+
+    public void delete(UUID id) { profileRepository.deleteById(id); }
+}
