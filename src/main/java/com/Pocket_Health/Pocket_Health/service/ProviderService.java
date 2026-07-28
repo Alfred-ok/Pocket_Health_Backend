@@ -48,6 +48,26 @@ public class ProviderService {
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
     }
 
+    public Provider getByUserId(UUID userId) {
+        return providerRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new RuntimeException("Provider not found for this user"));
+    }
+
+    public List<String> getSpecialties() { return providerRepository.findDistinctSpecialties(); }
+
+    public List<Provider> search(String query, String specialty, String region, String category, Boolean available) {
+        List<Provider> results = query != null && !query.isBlank()
+                ? providerRepository.findByProviderNameContainingIgnoreCaseOrSpecialtyContainingIgnoreCase(query, query)
+                : providerRepository.findAll();
+
+        return results.stream()
+                .filter(p -> specialty == null || specialty.isBlank() || specialty.equalsIgnoreCase(p.getSpecialty()))
+                .filter(p -> region == null || region.isBlank() || region.equalsIgnoreCase(p.getRegion()))
+                .filter(p -> category == null || category.isBlank() || category.equalsIgnoreCase(p.getCategory()))
+                .filter(p -> available == null || available.equals(p.getIsAvailable()))
+                .toList();
+    }
+
     public Provider update(UUID id, Map<String, Object> body) {
         Provider provider = getById(id);
         if (body.containsKey("providerName")) provider.setProviderName((String) body.get("providerName"));

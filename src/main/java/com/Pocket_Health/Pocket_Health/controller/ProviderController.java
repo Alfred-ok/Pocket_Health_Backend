@@ -32,6 +32,27 @@ public class ProviderController {
         return ResponseEntity.ok(ApiResponse.ok("Providers fetched", providers));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<Provider>>> search(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String specialty,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Boolean available) {
+        return ResponseEntity.ok(ApiResponse.ok("Providers fetched",
+                providerService.search(query, specialty, region, category, available)));
+    }
+
+    @GetMapping("/specialties")
+    public ResponseEntity<ApiResponse<List<String>>> getSpecialties() {
+        return ResponseEntity.ok(ApiResponse.ok("Specialties fetched", providerService.getSpecialties()));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<Provider>> getByUserId(@PathVariable UUID userId) {
+        return ResponseEntity.ok(ApiResponse.ok("Provider fetched", providerService.getByUserId(userId)));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Provider>> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok("Provider fetched", providerService.getById(id)));

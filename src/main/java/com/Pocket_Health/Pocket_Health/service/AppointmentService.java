@@ -6,6 +6,7 @@ import com.Pocket_Health.Pocket_Health.entity.Provider;
 import com.Pocket_Health.Pocket_Health.repository.AppointmentRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProviderRepository;
+import com.Pocket_Health.Pocket_Health.service.ProviderAvailabilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
@@ -20,6 +21,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final ProfileRepository profileRepository;
     private final ProviderRepository providerRepository;
+    private final ProviderAvailabilityService providerAvailabilityService;
 
     public Appointment create(Map<String, Object> body) {
         Profile profile = profileRepository.findById(UUID.fromString((String) body.get("patientProfileId")))
@@ -27,15 +29,37 @@ public class AppointmentService {
         Provider provider = providerRepository.findById(UUID.fromString((String) body.get("providerId")))
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
 
+        OffsetDateTime scheduledAt = OffsetDateTime.parse((String) body.get("scheduledAt"));
+        int durationSlot = body.get("durationSlot") != null ? Integer.valueOf(body.get("durationSlot").toString()) : 30;
+
+        if (!providerAvailabilityService.isWithinAvailability(provider.getProviderId(), scheduledAt, durationSlot)) {
+            throw new RuntimeException("Selected slot is outside the provider's availability");
+        }
+        if (hasConflict(provider.getProviderId(), scheduledAt, durationSlot, null)) {
+            throw new RuntimeException("Selected slot is no longer available");
+        }
+
         Appointment appointment = Appointment.builder()
                 .patientProfile(profile)
                 .provider(provider)
-                .scheduledAt(OffsetDateTime.parse((String) body.get("scheduledAt")))
-                .durationSlot(body.get("durationSlot") != null ? Integer.valueOf(body.get("durationSlot").toString()) : 30)
+                .scheduledAt(scheduledAt)
+                .durationSlot(durationSlot)
                 .status("pending")
                 .attended(false)
                 .build();
         return appointmentRepository.save(appointment);
+    }
+
+    private boolean hasConflict(UUID providerId, OffsetDateTime scheduledAt, int durationSlot, UUID excludeAppointmentId) {
+        OffsetDateTime newEnd = scheduledAt.plusMinutes(durationSlot);
+        return appointmentRepository.findByProvider_ProviderId(providerId).stream()
+                .filter(a -> !"cancelled".equalsIgnoreCase(a.getStatus()))
+                .filter(a -> excludeAppointmentId == null || !a.getAppointmentId().equals(excludeAppointmentId))
+                .anyMatch(a -> {
+                    OffsetDateTime existingStart = a.getScheduledAt();
+                    OffsetDateTime existingEnd = existingStart.plusMinutes(a.getDurationSlot() != null ? a.getDurationSlot() : 30);
+                    return scheduledAt.isBefore(existingEnd) && existingStart.isBefore(newEnd);
+                });
     }
 
     public List<Appointment> getAll() { return appointmentRepository.findAll(); }
