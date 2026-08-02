@@ -10,9 +10,9 @@ import java.util.UUID;
 @Table(name = "next_of_kin")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class NextOfKin {
 
     @Id
@@ -20,26 +20,25 @@ public class NextOfKin {
     @Column(name = "next_of_kin_id")
     private UUID nextOfKinId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "profile_id", nullable = false)
     private Profile profile;
 
-    @Column(name = "full_name", nullable = false)
+    @Column(nullable = false)
     private String fullName;
 
     @Column(nullable = false)
     private String relationship;
 
-    @Column(name = "phone1", nullable = false)
+    @Column(nullable = false)
     private String phone1;
 
-    @Column(name = "phone2")
     private String phone2;
 
     private String email;
 
     private String address;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 }
