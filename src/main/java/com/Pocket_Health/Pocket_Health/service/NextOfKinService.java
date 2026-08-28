@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.NextOfKin;
 import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.repository.NextOfKinRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +18,13 @@ public class NextOfKinService {
 
     private final NextOfKinRepository nextOfKinRepository;
     private final ProfileRepository profileRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public NextOfKin create(Map<String, Object> body) {
 
         UUID profileId = UUID.fromString((String) body.get("profileId"));
 
-        Profile profile = profileRepository.findById(profileId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(profileId);
 
         NextOfKin kin = NextOfKin.builder()
                 .profile(profile)
@@ -39,6 +40,7 @@ public class NextOfKinService {
     }
 
     public List<NextOfKin> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return nextOfKinRepository.findByProfile_ProfileId(profileId);
     }
 

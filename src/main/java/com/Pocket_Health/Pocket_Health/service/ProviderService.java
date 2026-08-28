@@ -7,16 +7,35 @@ import com.Pocket_Health.Pocket_Health.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ProviderService {
 
+    private static final Set<String> CATEGORIES = new LinkedHashSet<>(List.of(
+            "doctor", "nurse", "specialist", "hospital", "pharmacy", "lab", "insurer"));
+
     private final ProviderRepository providerRepository;
     private final UserRepository userRepository;
+
+    private String validateCategory(Object rawCategory) {
+        if (rawCategory == null) return null;
+        String category = rawCategory.toString().trim();
+        if (category.isEmpty()) return null;
+        String match = CATEGORIES.stream()
+                .filter(c -> c.equalsIgnoreCase(category))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Unknown provider category '" + category + "'. Allowed: " + String.join(", ", CATEGORIES)));
+        return match;
+    }
+
+    public List<String> getCategories() { return List.copyOf(CATEGORIES); }
 
     public Provider create(Map<String, Object> body) {
         UUID userId = UUID.fromString((String) body.get("userId"));
@@ -26,7 +45,7 @@ public class ProviderService {
         Provider provider = Provider.builder()
                 .user(user)
                 .providerName((String) body.get("providerName"))
-                .category((String) body.get("category"))
+                .category(validateCategory(body.get("category")))
                 .specialty((String) body.get("specialty"))
                 .location((String) body.get("location"))
                 .region((String) body.get("region"))
@@ -71,6 +90,8 @@ public class ProviderService {
     public Provider update(UUID id, Map<String, Object> body) {
         Provider provider = getById(id);
         if (body.containsKey("providerName")) provider.setProviderName((String) body.get("providerName"));
+        if (body.containsKey("category"))     provider.setCategory(validateCategory(body.get("category")));
+        if (body.containsKey("region"))       provider.setRegion((String) body.get("region"));
         if (body.containsKey("specialty"))    provider.setSpecialty((String) body.get("specialty"));
         if (body.containsKey("location"))     provider.setLocation((String) body.get("location"));
         if (body.containsKey("isAvailable"))  provider.setIsAvailable((Boolean) body.get("isAvailable"));

@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.HealthInfo;
 import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.repository.HealthInfoRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.Map;
@@ -15,11 +16,11 @@ public class HealthInfoService {
 
     private final HealthInfoRepository healthInfoRepository;
     private final ProfileRepository profileRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public HealthInfo create(Map<String, Object> body) {
         UUID profileId = UUID.fromString((String) body.get("profileId"));
-        Profile profile = profileRepository.findById(profileId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(profileId);
 
         HealthInfo info = HealthInfo.builder()
                 .profile(profile)
@@ -36,6 +37,7 @@ public class HealthInfoService {
     }
 
     public HealthInfo getByProfileId(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return healthInfoRepository.findByProfile_ProfileId(profileId)
                 .orElseThrow(() -> new RuntimeException("Health info not found"));
     }

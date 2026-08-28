@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.EmergencyContact;
 import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.repository.EmergencyContactRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -16,11 +17,18 @@ public class EmergencyContactService {
 
     private final EmergencyContactRepository emergencyContactRepository;
     private final ProfileRepository profileRepository;
+    private final ProfileAccessGuard profileAccessGuard;
+
+    private static final int MAX_CONTACTS_PER_PROFILE = 3;
 
     public EmergencyContact create(Map<String, Object> body) {
-        Profile profile = profileRepository
-                .findById(UUID.fromString((String) body.get("profileId")))
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(UUID.fromString((String) body.get("profileId")));
+
+        if (emergencyContactRepository.findByProfile_ProfileIdOrderByPriorityAsc(profile.getProfileId()).size()
+                >= MAX_CONTACTS_PER_PROFILE) {
+            throw new RuntimeException("You can only have up to " + MAX_CONTACTS_PER_PROFILE + " emergency contacts");
+        }
+
         EmergencyContact contact = EmergencyContact.builder()
                 .profile(profile)
                 .name((String) body.get("name"))
@@ -33,6 +41,7 @@ public class EmergencyContactService {
     }
 
     public List<EmergencyContact> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return emergencyContactRepository.findByProfile_ProfileIdOrderByPriorityAsc(profileId);
     }
 

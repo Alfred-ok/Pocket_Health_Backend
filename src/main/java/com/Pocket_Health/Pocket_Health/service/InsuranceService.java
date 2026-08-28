@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.Insurance;
 import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.repository.InsuranceRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -16,11 +17,10 @@ public class InsuranceService {
 
     private final InsuranceRepository insuranceRepository;
     private final ProfileRepository profileRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public Insurance create(Map<String, Object> body) {
-        Profile profile = profileRepository
-                .findById(UUID.fromString((String) body.get("profileId")))
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(UUID.fromString((String) body.get("profileId")));
         Insurance insurance = Insurance.builder()
                 .profile(profile)
                 .insurerName((String) body.get("insurerName"))
@@ -32,6 +32,7 @@ public class InsuranceService {
     }
 
     public List<Insurance> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return insuranceRepository.findByProfile_ProfileId(profileId);
     }
 

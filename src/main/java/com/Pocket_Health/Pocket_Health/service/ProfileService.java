@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.entity.User;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
 import com.Pocket_Health.Pocket_Health.repository.UserRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -17,9 +18,11 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public Profile create(Map<String, Object> body) {
         UUID userId = UUID.fromString((String) body.get("userId"));
+        profileAccessGuard.requireOwnedUser(userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -27,7 +30,7 @@ public class ProfileService {
                 .user(user)
                 .surname((String) body.get("surname"))
                 .otherNames((String) body.get("otherNames"))
-                .dateOfBirth(body.get("dateOfBirth") != null ? LocalDate.parse((String) body.get("dateOfBirth")) : null)
+                .dateOfBirth(parseDate(body.get("dateOfBirth")))
                 .gender((String) body.get("gender"))
                 .phone1((String) body.get("phone1"))
                 .residence((String) body.get("residence"))
@@ -41,11 +44,11 @@ public class ProfileService {
     public List<Profile> getAll() { return profileRepository.findAll(); }
 
     public Profile getById(UUID id) {
-        return profileRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        return profileAccessGuard.requireOwnedProfile(id);
     }
 
     public List<Profile> getByUserId(UUID userId) {
+        profileAccessGuard.requireOwnedUser(userId);
         return profileRepository.findByUser_UserId(userId);
     }
 
@@ -60,5 +63,14 @@ public class ProfileService {
         return profileRepository.save(profile);
     }
 
-    public void delete(UUID id) { profileRepository.deleteById(id); }
+    public void delete(UUID id) {
+        profileAccessGuard.requireOwnedProfile(id);
+        profileRepository.deleteById(id);
+    }
+
+    private LocalDate parseDate(Object value) {
+        if (value == null) return null;
+        String raw = value.toString().trim();
+        return raw.isEmpty() ? null : LocalDate.parse(raw);
+    }
 }

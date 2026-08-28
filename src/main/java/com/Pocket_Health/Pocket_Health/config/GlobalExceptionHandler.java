@@ -1,6 +1,7 @@
 package com.Pocket_Health.Pocket_Health.config;
 
 import com.Pocket_Health.Pocket_Health.dto.response.ApiResponse;
+import com.Pocket_Health.Pocket_Health.exception.ProfileAccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,6 +12,13 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ProfileAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProfileAccessDenied(ProfileAccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException ex) {

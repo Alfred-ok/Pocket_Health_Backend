@@ -48,6 +48,11 @@ public class ProviderController {
         return ResponseEntity.ok(ApiResponse.ok("Specialties fetched", providerService.getSpecialties()));
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<List<String>>> getCategories() {
+        return ResponseEntity.ok(ApiResponse.ok("Categories fetched", providerService.getCategories()));
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<Provider>> getByUserId(@PathVariable UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok("Provider fetched", providerService.getByUserId(userId)));

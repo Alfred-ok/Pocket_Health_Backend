@@ -4,6 +4,7 @@ import com.Pocket_Health.Pocket_Health.entity.Document;
 import com.Pocket_Health.Pocket_Health.entity.Profile;
 import com.Pocket_Health.Pocket_Health.repository.DocumentRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -16,11 +17,10 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final ProfileRepository profileRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public Document create(Map<String, Object> body) {
-        Profile profile = profileRepository
-                .findById(UUID.fromString((String) body.get("ownerProfileId")))
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(UUID.fromString((String) body.get("ownerProfileId")));
         Document doc = Document.builder()
                 .ownerProfile(profile)
                 .docType((String) body.get("docType"))
@@ -32,10 +32,12 @@ public class DocumentService {
     }
 
     public List<Document> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return documentRepository.findByOwnerProfile_ProfileId(profileId);
     }
 
     public List<Document> getByProfileAndType(UUID profileId, String docType) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return documentRepository.findByOwnerProfile_ProfileIdAndDocType(profileId, docType);
     }
 

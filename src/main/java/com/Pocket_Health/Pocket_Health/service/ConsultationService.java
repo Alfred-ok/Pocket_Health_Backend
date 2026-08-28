@@ -6,6 +6,7 @@ import com.Pocket_Health.Pocket_Health.entity.Provider;
 import com.Pocket_Health.Pocket_Health.repository.ConsultationRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProviderRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
@@ -21,10 +22,10 @@ public class ConsultationService {
     private final ConsultationRepository consultationRepository;
     private final ProfileRepository profileRepository;
     private final ProviderRepository providerRepository;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public Consultation create(Map<String, Object> body) {
-        Profile profile = profileRepository.findById(UUID.fromString((String) body.get("patientProfileId")))
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(UUID.fromString((String) body.get("patientProfileId")));
         Provider provider = providerRepository.findById(UUID.fromString((String) body.get("providerId")))
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
 
@@ -48,6 +49,7 @@ public class ConsultationService {
     }
 
     public List<Consultation> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return consultationRepository.findByPatientProfile_ProfileId(profileId);
     }
 

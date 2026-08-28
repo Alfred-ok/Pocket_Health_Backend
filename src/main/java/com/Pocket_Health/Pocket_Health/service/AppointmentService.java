@@ -6,6 +6,7 @@ import com.Pocket_Health.Pocket_Health.entity.Provider;
 import com.Pocket_Health.Pocket_Health.repository.AppointmentRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProfileRepository;
 import com.Pocket_Health.Pocket_Health.repository.ProviderRepository;
+import com.Pocket_Health.Pocket_Health.security.ProfileAccessGuard;
 import com.Pocket_Health.Pocket_Health.service.ProviderAvailabilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,10 @@ public class AppointmentService {
     private final ProfileRepository profileRepository;
     private final ProviderRepository providerRepository;
     private final ProviderAvailabilityService providerAvailabilityService;
+    private final ProfileAccessGuard profileAccessGuard;
 
     public Appointment create(Map<String, Object> body) {
-        Profile profile = profileRepository.findById(UUID.fromString((String) body.get("patientProfileId")))
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        Profile profile = profileAccessGuard.requireOwnedProfile(UUID.fromString((String) body.get("patientProfileId")));
         Provider provider = providerRepository.findById(UUID.fromString((String) body.get("providerId")))
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
 
@@ -70,6 +71,7 @@ public class AppointmentService {
     }
 
     public List<Appointment> getByProfile(UUID profileId) {
+        profileAccessGuard.requireOwnedProfile(profileId);
         return appointmentRepository.findByPatientProfile_ProfileId(profileId);
     }
 
