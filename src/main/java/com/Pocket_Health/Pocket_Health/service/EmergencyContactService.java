@@ -34,6 +34,7 @@ public class EmergencyContactService {
                 .name((String) body.get("name"))
                 .phone1((String) body.get("phone1"))
                 .phone2((String) body.get("phone2"))
+                .email((String) body.get("email"))
                 .priority(body.get("priority") != null ? Short.valueOf(body.get("priority").toString()) : (short) 1)
                 .emergencyType((String) body.get("emergencyType"))
                 .build();
@@ -55,6 +56,7 @@ public class EmergencyContactService {
         if (body.containsKey("name"))          c.setName((String) body.get("name"));
         if (body.containsKey("phone1"))        c.setPhone1((String) body.get("phone1"));
         if (body.containsKey("phone2"))        c.setPhone2((String) body.get("phone2"));
+        if (body.containsKey("email"))         c.setEmail((String) body.get("email"));
         if (body.containsKey("priority"))      c.setPriority(Short.valueOf(body.get("priority").toString()));
         if (body.containsKey("emergencyType")) c.setEmergencyType((String) body.get("emergencyType"));
         return emergencyContactRepository.save(c);

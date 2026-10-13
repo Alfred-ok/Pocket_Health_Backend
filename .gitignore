@@ -9,6 +9,7 @@ build/
 # Environment
 .env
 .env.*
+src/main/resources/application-secrets.properties
 
 # IDE
 .idea/

@@ -29,4 +29,6 @@ public class Insurance {
 
     @Column(name = "phone_2")
     private String phone2;
+
+    private String email;
 }

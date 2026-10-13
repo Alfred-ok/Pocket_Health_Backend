@@ -27,6 +27,7 @@ public class InsuranceService {
                 .policyNumber((String) body.get("policyNumber"))
                 .phone1((String) body.get("phone1"))
                 .phone2((String) body.get("phone2"))
+                .email((String) body.get("email"))
                 .build();
         return insuranceRepository.save(insurance);
     }
@@ -47,6 +48,7 @@ public class InsuranceService {
         if (body.containsKey("policyNumber")) i.setPolicyNumber((String) body.get("policyNumber"));
         if (body.containsKey("phone1"))       i.setPhone1((String) body.get("phone1"));
         if (body.containsKey("phone2"))       i.setPhone2((String) body.get("phone2"));
+        if (body.containsKey("email"))        i.setEmail((String) body.get("email"));
         return insuranceRepository.save(i);
     }
 

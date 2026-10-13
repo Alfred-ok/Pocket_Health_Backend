@@ -60,6 +60,8 @@ public class ProfileService {
         if (body.containsKey("residence"))  profile.setResidence((String) body.get("residence"));
         if (body.containsKey("region"))     profile.setRegion((String) body.get("region"));
         if (body.containsKey("gender"))     profile.setGender((String) body.get("gender"));
+        if (body.containsKey("dateOfBirth")) profile.setDateOfBirth(parseDate(body.get("dateOfBirth")));
+        if (body.containsKey("relation"))   profile.setRelation((String) body.get("relation"));
         return profileRepository.save(profile);
     }
 
@@ -71,6 +73,8 @@ public class ProfileService {
     private LocalDate parseDate(Object value) {
         if (value == null) return null;
         String raw = value.toString().trim();
-        return raw.isEmpty() ? null : LocalDate.parse(raw);
+        if (raw.isEmpty()) return null;
+        // Accept "yyyy-MM-dd" as well as a full ISO timestamp ("yyyy-MM-ddTHH:mm:ss...").
+        return LocalDate.parse(raw.length() > 10 ? raw.substring(0, 10) : raw);
     }
 }

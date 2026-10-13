@@ -27,6 +27,8 @@ public class EmergencyContact {
     @Column(name = "phone_2")
     private String phone2;
 
+    private String email;
+
     private Short priority = 1;
 
     @Column(name = "emergency_type")
